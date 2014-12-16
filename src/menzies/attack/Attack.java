@@ -3,12 +3,22 @@ package menzies.attack;
 import java.util.*;
 import java.sql.*;
 
+import weka.core.Instances;
+import weka.core.converters.ConverterUtils.DataSource;
+import weka.experiment.InstanceQuery;
+import weka.filters.Filter;
+import weka.filters.unsupervised.attribute.Discretize;
 import menzies.database.*;
 
 public class Attack {
+	
+	static private int totalBin = 4;
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
+		
+		//how many bins we divided
+		
 		//args contains two tables' name, query size and sensitive attributes
 		//args[0] is the origin table's name
 		//args[1] is the privatized table's name
@@ -17,10 +27,13 @@ public class Attack {
 		if(args.length != 4){
 			System.out.println("usage: origin_name privatized_name query_size arribute1;arribute2;...");
 		}
-		Query[] queries = queryGenerator(args[0], Integer.parseInt(args[1]));
+		
+		String[] attrs = args[3].split(";");
+		
+		Query[] queries = queryGenerator(args[0], Integer.parseInt(args[2]), attrs);
 		
 		//subrange generator
-		String[] attrs = args[3].split(";");
+		
 		ArrayList<SubRanges> subs = new ArrayList<SubRanges>();
 		for(String attr:attrs){
 			subs.add(subrangesGenerator(attr, args[0]));
@@ -63,11 +76,118 @@ public class Attack {
 		
 	}
 
-	public static Query[] queryGenerator(String tableName, int n){
+	public static Query[] queryGenerator(String tableName, int n, String[] sAttr){
+		//get non sensitive attribute
+		Database database = new Database();
+		ArrayList<String> nsAttr = database.getColumnName(tableName);
+		for(int i=0; i<sAttr.length; i++){
+			nsAttr.remove(sAttr[i]);
+		}
+		
+		//generate random number
+		Random random = new Random();
+		
+		Query[] result = new Query[n];
+		
+		for (int j = 0; j < n; j++) {
+			// generate one query
+			try {
+				InstanceQuery query;
+				query = new InstanceQuery();
+				query.setUsername("root");
+				query.setPassword("2543120");
+
+				int arity = random.nextInt(4);
+				SubRange[] subs = new SubRange[arity];
+				for (int i = 0; i < arity; i++) {
+					// get attribute
+					int index = random.nextInt(nsAttr.size());
+					String attr = nsAttr.get(index);
+
+					query.setQuery("select " + attr + " from " + tableName);
+					Instances data = query.retrieveInstances();
+
+					Discretize filter = new Discretize();
+					filter.setBins(Attack.totalBin);
+					filter.setInputFormat(data);
+					filter.setUseEqualFrequency(true);
+					Instances data_new = Filter.useFilter(data, filter);
+
+					double[] cutPoints = filter.getCutPoints(data_new
+							.attribute(attr).index());
+
+					double low, high;
+					index = random.nextInt(cutPoints.length + 1);
+					if (index == 0) {
+						low = Double.NEGATIVE_INFINITY;
+						high = cutPoints[index];
+					} else if (index == cutPoints.length) {
+						low = cutPoints[cutPoints.length - 1];
+						high = Double.POSITIVE_INFINITY;
+					} else {
+						low = cutPoints[index - 1];
+						high = cutPoints[index];
+					}
+					subs[i] = new SubRange(low, high, attr);
+				}
+				// generate sql
+				String sql = "select ";
+				for (int i = 0; i < arity - 1; i++) {
+					sql = sql + subs[i].attr + ",";
+				}
+				sql = sql + subs[subs.length - 1].attr + " from " + tableName
+						+ " where ";
+				for (int i = 0; i < arity - 1; i++) {
+					sql = sql + Attack.range2str(subs[i]) + " and ";
+				}
+				sql = sql + Attack.range2str(subs[subs.length - 1]) + " ;";
+				result[j] = new Query(subs, sql);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			return result;
+		}
 		return null;
 	}
 	
+	private static String range2str(SubRange sub){
+		String result = "";
+		if(sub.lower == Double.NEGATIVE_INFINITY){
+			result = sub.attr + "<" + Double.toString(sub.higher);
+		}else if(sub.higher == Double.POSITIVE_INFINITY){
+			result = Double.toString(sub.lower) + "<" + sub.attr;
+		}else{
+			result = Double.toString(sub.lower) + "<" + sub.attr + " and " + sub.attr + "<" + Double.toString(sub.higher);
+		}
+		return result;
+	}
+	
 	public static SubRanges subrangesGenerator(String attr, String tableName){
+		//connect to the database
+		try {
+			InstanceQuery query;
+			query = new InstanceQuery();
+			query.setUsername("root");
+			query.setPassword("2543120");
+			query.setQuery("select "+ attr +" from " + tableName);
+			Instances data = query.retrieveInstances();
+			
+			Discretize filter = new Discretize();
+			filter.setBins(Attack.totalBin);
+			filter.setInputFormat(data);
+			filter.setUseEqualFrequency(true);
+			Instances data_new = Filter.useFilter(data, filter);
+			
+			double[] cutPoints = filter.getCutPoints(data_new.attribute(attr).index());
+			//System.out.println(data_new.attribute(0).name());
+			for(int i=0; i<cutPoints.length; i++)
+				System.out.println(cutPoints[i]);
+			
+			//this may exist potential problem.
+			return new SubRanges(cutPoints, attr);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		return null;
 	}
 }

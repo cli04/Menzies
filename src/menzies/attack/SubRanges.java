@@ -60,6 +60,7 @@ public class SubRanges {
 				max = e;
 			}
 		}
+		//System.out.println(this.bin.indexOf(max));
 		return this.bin.indexOf(max);
 	}
 	

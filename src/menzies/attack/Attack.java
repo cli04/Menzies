@@ -43,8 +43,15 @@ public class Attack {
 		Database database = new Database();
 		for(Query query:queries){
 			//G1 and G2
+			String sql = query.getSQL();
+			System.out.println(sql);
+			String[] tokens = sql.split(" ");
+			tokens[3] = args[1];
+			sql = "";
+			for (int index = 0; index < tokens.length; index++)
+				sql += tokens[index] + " ";
 			ResultSet rs1 = database.executeQuery(query.getSQL());
-			ResultSet rs2 = database.executeQuery(query.getSQL());
+			ResultSet rs2 = database.executeQuery(sql);
 			
 			try {
 				for(SubRanges sub:subs) {
@@ -62,8 +69,11 @@ public class Attack {
 					}
 					int maxG2 = sub.getMax();
 					if (maxG1 == maxG2){
+						System.out.println("same: " + maxG1 + " " + maxG2);
 						sumBreach++;
 						break;
+					}else{
+						System.out.println("not same: " + maxG1 + " " + maxG2);
 					}
 				}
 			} catch (Exception e) {
@@ -72,7 +82,7 @@ public class Attack {
 				
 		}
 		//final result
-		System.out.println(sumBreach/Integer.parseInt(args[1]));
+		System.out.println((double)sumBreach/Integer.parseInt(args[2]));
 		
 	}
 
@@ -97,7 +107,7 @@ public class Attack {
 				query.setUsername("root");
 				query.setPassword("2543120");
 
-				int arity = random.nextInt(4);
+				int arity = random.nextInt(3)+1;
 				SubRange[] subs = new SubRange[arity];
 				for (int i = 0; i < arity; i++) {
 					// get attribute
@@ -115,7 +125,14 @@ public class Attack {
 
 					double[] cutPoints = filter.getCutPoints(data_new
 							.attribute(attr).index());
-
+					//ignore string type attr
+					if (cutPoints == null){
+						i--;
+						continue;
+					}
+					///////////////////////////
+					//System.out.println("cutPoints: " + cutPoints.length);
+					
 					double low, high;
 					index = random.nextInt(cutPoints.length + 1);
 					if (index == 0) {
@@ -132,22 +149,35 @@ public class Attack {
 				}
 				// generate sql
 				String sql = "select ";
-				for (int i = 0; i < arity - 1; i++) {
+				/*for (int i = 0; i < arity - 1; i++) {
 					sql = sql + subs[i].attr + ",";
 				}
 				sql = sql + subs[subs.length - 1].attr + " from " + tableName
+						+ " where ";*/
+				sql = sql + "*" + " from " + tableName
 						+ " where ";
 				for (int i = 0; i < arity - 1; i++) {
 					sql = sql + Attack.range2str(subs[i]) + " and ";
 				}
+				//System.out.println(subs.length);
 				sql = sql + Attack.range2str(subs[subs.length - 1]) + " ;";
+				//System.out.println(j + ": " + sql);
+				
+				//test whether this works
+				ResultSet rs = database.executeQuery(sql);
+				//ignore the query that has no result.
+				if(!rs.first()){
+					j--;
+					continue;
+				}
+				//////////////////////
 				result[j] = new Query(subs, sql);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
-			return result;
+			//return result;
 		}
-		return null;
+		return result;
 	}
 	
 	private static String range2str(SubRange sub){
@@ -180,8 +210,8 @@ public class Attack {
 			
 			double[] cutPoints = filter.getCutPoints(data_new.attribute(attr).index());
 			//System.out.println(data_new.attribute(0).name());
-			for(int i=0; i<cutPoints.length; i++)
-				System.out.println(cutPoints[i]);
+			/*for(int i=0; i<cutPoints.length; i++)
+				System.out.println(cutPoints[i]);*/
 			
 			//this may exist potential problem.
 			return new SubRanges(cutPoints, attr);

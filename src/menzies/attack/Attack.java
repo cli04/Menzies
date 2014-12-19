@@ -15,7 +15,7 @@ public class Attack {
 	
 	static private int totalBin = 4;
 	static final private String user = "root";
-	static final private String password = "root";
+	static final private String password = "2543120";
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub

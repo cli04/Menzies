@@ -1,6 +1,7 @@
 package menzies.attack;
 
 import java.util.*;
+import java.io.*;
 import java.sql.*;
 
 import weka.core.Instances;
@@ -24,9 +25,20 @@ public class Attack {
 		//args[1] is the privatized table's name
 		//args[2] is the query size
 		//args[3] is the sensitive attributes, which are separated by ";"
-		if(args.length != 4){
+		/*if(args.length != 4){
 			System.out.println("usage: origin_name privatized_name query_size arribute1;arribute2;...");
+		}*/
+		try{
+			File file = new File("config.txt");
+			BufferedReader input = new BufferedReader(new FileReader(file));
+			String line = input.readLine();
+			args = line.split(" ");
+			input.close();
+		}catch(Exception e){
+			e.printStackTrace();
+			return;
 		}
+		
 		
 		String[] attrs = args[3].split(";");
 		

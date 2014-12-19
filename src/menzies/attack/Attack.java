@@ -14,6 +14,8 @@ import menzies.database.*;
 public class Attack {
 	
 	static private int totalBin = 4;
+	static final private String user = "root";
+	static final private String password = "root";
 
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
@@ -116,8 +118,8 @@ public class Attack {
 			try {
 				InstanceQuery query;
 				query = new InstanceQuery();
-				query.setUsername("root");
-				query.setPassword("2543120");
+				query.setUsername(Attack.user);
+				query.setPassword(Attack.password);
 
 				int arity = random.nextInt(3)+1;
 				SubRange[] subs = new SubRange[arity];
@@ -209,8 +211,8 @@ public class Attack {
 		try {
 			InstanceQuery query;
 			query = new InstanceQuery();
-			query.setUsername("root");
-			query.setPassword("2543120");
+			query.setUsername(Attack.user);
+			query.setPassword(Attack.password);
 			query.setQuery("select "+ attr +" from " + tableName);
 			Instances data = query.retrieveInstances();
 			

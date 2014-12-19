@@ -4,7 +4,7 @@ import java.sql.*;
 import java.util.*;
 
 public class Database {
-	private Connection con = null;
+	static private Connection con = null;
 	
 	public Database(){
 		try{
@@ -18,6 +18,9 @@ public class Database {
 	
 	public ResultSet executeQuery(String sql){
 		try{
+			if(this.con == null)
+				System.out.println("what?!");
+				
 			Statement stmt = this.con.createStatement();
 			ResultSet rs = stmt.executeQuery(sql);
 			return rs;

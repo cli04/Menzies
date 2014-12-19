@@ -13,7 +13,7 @@ import menzies.database.*;
 
 public class Attack {
 	
-	static private int totalBin = 4;
+	static private int totalBin = 400;
 	static final private String user = "root";
 	static final private String password = "2543120";
 
@@ -57,6 +57,8 @@ public class Attack {
 		Database database = new Database();
 		for(Query query:queries){
 			//G1 and G2
+			if(query == null)
+				System.out.println("nani!");
 			String sql = query.getSQL();
 			System.out.println(sql);
 			String[] tokens = sql.split(" ");

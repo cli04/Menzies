@@ -1,1 +1,1 @@
-test test1 5 balance
+bankaccounts bankaccounts_10 500 amount

@@ -115,13 +115,17 @@ public class Attack {
 		
 		Query[] result = new Query[n];
 		
+		try{
+		InstanceQuery query;
+		query = new InstanceQuery();
+		query.setUsername(Attack.user);
+		query.setPassword(Attack.password);
+		Instances data = null;
+		
 		for (int j = 0; j < n; j++) {
 			// generate one query
 			try {
-				InstanceQuery query;
-				query = new InstanceQuery();
-				query.setUsername(Attack.user);
-				query.setPassword(Attack.password);
+				
 
 				int arity = random.nextInt(3)+1;
 				SubRange[] subs = new SubRange[arity];
@@ -131,7 +135,7 @@ public class Attack {
 					String attr = nsAttr.get(index);
 
 					query.setQuery("select " + attr + " from " + tableName);
-					Instances data = query.retrieveInstances();
+					data = query.retrieveInstances();
 
 					Discretize filter = new Discretize();
 					filter.setBins(Attack.totalBin);
@@ -162,6 +166,7 @@ public class Attack {
 						high = cutPoints[index];
 					}
 					subs[i] = new SubRange(low, high, attr);
+					query.close();
 				}
 				// generate sql
 				String sql = "select ";
@@ -192,6 +197,10 @@ public class Attack {
 				e.printStackTrace();
 			}
 			//return result;
+			
+		}
+		}catch(Exception e){
+			e.printStackTrace();
 		}
 		return result;
 	}

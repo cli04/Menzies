@@ -1,1 +1,1 @@
-bankaccounts bankaccounts_10 500 amount
+bankaccounts bankaccounts_10 10000 amount
